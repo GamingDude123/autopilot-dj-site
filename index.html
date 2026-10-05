@@ -3,105 +3,291 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a1030">
 <title>Autopilot DJ for Mac and Windows</title>
 <link rel="canonical" href="https://autopilotdj.com/">
 <meta name="description" content="Autopilot DJ is a desktop app for Mac and Windows that mixes your own music into a continuous DJ set for you.">
 <style>
-  :root { --ink: #f4f0ff; --dim: #b4aad6; --a: #ff9ad5; --b: #8fe6ff; --go: #b9ffd6; --edge: rgba(255,255,255,.16); --glass: rgba(255,255,255,.07);
-          --font: "Outfit", ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  :root { --ink: #f4f0ff; --dim: #b4aad6; --a: #ff9ad5; --b: #8fe6ff; --go: #b9ffd6; --edge: rgba(255,255,255,.16); --glass: rgba(255,255,255,.07); --bg: #1a1030;
+          --font: "Outfit", ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; --ease: cubic-bezier(.2,.7,.2,1); }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; font-family: var(--font); color: var(--ink); line-height: 1.55; min-height: 100vh;
-         background: radial-gradient(900px 520px at 15% -8%, #4b2a86 0%, transparent 60%), radial-gradient(800px 560px at 105% 20%, #1d4f72 0%, transparent 55%), #1a1030; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  body { margin: 0; font-family: var(--font); color: var(--ink); line-height: 1.55; min-height: 100vh; background: var(--bg); overflow-x: hidden; }
+  .wrap { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+  /* background glow that drifts as you scroll */
+  .orb { position: fixed; z-index: 0; width: 70vmax; height: 70vmax; border-radius: 50%; filter: blur(90px); opacity: .5; pointer-events: none; will-change: transform; }
+  .orb.o1 { left: -30vmax; top: -25vmax; background: radial-gradient(circle, #5a2fa3, transparent 65%); }
+  .orb.o2 { right: -32vmax; top: 20vh; background: radial-gradient(circle, #1d5f8c, transparent 65%); }
+  .orb.o3 { left: 10vmax; bottom: -45vmax; background: radial-gradient(circle, #8a2f7a, transparent 65%); opacity: .35; }
+  #bar { position: fixed; z-index: 10; left: 0; top: 0; height: 3px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--a), var(--b)); }
+
   header { padding: 22px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .brand { font-weight: 700; font-size: 20px; letter-spacing: .2px; }
-  .brand span, h1 span { background: linear-gradient(90deg, var(--a), var(--b)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .soon { font-size: 13px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--edge); background: var(--glass); color: var(--go); }
-  .hero { padding: 64px 0 40px; text-align: center; }
-  h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 0 0 16px; letter-spacing: -.5px; }
-  .lead { font-size: clamp(17px, 2.4vw, 21px); color: var(--dim); max-width: 640px; margin: 0 auto 26px; }
+  .grad { background: linear-gradient(90deg, var(--a), var(--b), var(--a)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 6s linear infinite; }
+  .soon { font-size: 13px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--edge); background: var(--glass); color: var(--go); display: inline-flex; align-items: center; gap: 8px; }
+  .soon i { width: 8px; height: 8px; border-radius: 50%; background: var(--go); box-shadow: 0 0 0 0 rgba(185,255,214,.6); animation: ping 1.8s infinite; }
+
+  .hero { padding: 54px 0 10px; text-align: center; }
+  h1 { font-size: clamp(36px, 6.4vw, 64px); line-height: 1.05; margin: 0 0 16px; letter-spacing: -.8px; }
+  .lead { font-size: clamp(17px, 2.4vw, 21px); color: var(--dim); max-width: 640px; margin: 0 auto 24px; }
   .pills { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-  .pills span { padding: 8px 14px; border-radius: 99px; background: var(--glass); border: 1px solid var(--edge); font-size: 14.5px; }
-  h2 { font-size: clamp(24px, 3.6vw, 32px); margin: 0 0 18px; }
-  section { padding: 38px 0; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-  .card { padding: 18px 20px; border-radius: 18px; background: var(--glass); border: 1px solid var(--edge); }
-  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .pills span { padding: 8px 14px; border-radius: 99px; background: var(--glass); border: 1px solid var(--edge); font-size: 14.5px; backdrop-filter: blur(6px); }
+
+  /* the DJ rig */
+  .stage { position: relative; max-width: 780px; margin: 38px auto 0; animation: float 7s ease-in-out infinite; }
+  .stage svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .spin { transform-box: fill-box; transform-origin: center; animation: spin 3.2s linear infinite; }
+  .spin.rev { animation-duration: 4.6s; animation-direction: reverse; }
+  .arm { transform-box: fill-box; transform-origin: 85% 10%; animation: sway 5s ease-in-out infinite alternate; }
+  .vu rect { transform-box: fill-box; transform-origin: 50% 100%; animation: vu .8s ease-in-out infinite alternate; }
+  .vu rect:nth-child(2) { animation-duration: .6s; } .vu rect:nth-child(3) { animation-duration: .95s; } .vu rect:nth-child(4) { animation-duration: .7s; }
+  .vu rect:nth-child(5) { animation-duration: .55s; } .vu rect:nth-child(6) { animation-duration: .9s; } .vu rect:nth-child(7) { animation-duration: .65s; } .vu rect:nth-child(8) { animation-duration: .8s; }
+  .fa { animation: slide 2.7s ease-in-out infinite alternate; } .fb { animation: slide 3.3s ease-in-out infinite alternate-reverse; }
+  .xf { animation: xf 3.6s ease-in-out infinite alternate; }
+  .chip { position: absolute; padding: 7px 12px; border-radius: 99px; font-size: 13px; background: rgba(26,16,48,.75); border: 1px solid var(--edge); backdrop-filter: blur(8px); white-space: nowrap; animation: float 5s ease-in-out infinite; }
+  .chip.c1 { left: 1%; top: 6%; color: var(--a); } .chip.c2 { right: 1%; top: 14%; color: var(--b); animation-delay: -1.5s; }
+  .chip.c3 { left: 8%; bottom: 2%; color: var(--go); animation-delay: -3s; } .chip.c4 { right: 6%; bottom: 0; color: #ffd98f; animation-delay: -2.2s; }
+
+  .marquee { margin: 46px -20px 0; overflow: hidden; border-block: 1px solid var(--edge); background: rgba(255,255,255,.04); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+  .marquee div { display: flex; width: max-content; animation: marq 32s linear infinite; }
+  .marquee span { padding: 13px 22px; font-weight: 600; letter-spacing: 2px; font-size: 14px; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .marquee span::after { content: "\2726"; margin-left: 44px; color: var(--a); }
+
+  h2 { font-size: clamp(26px, 4vw, 36px); margin: 0 0 20px; letter-spacing: -.3px; }
+  section { padding: 56px 0 8px; }
+  .eyebrow { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--b); margin-bottom: 8px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+  .card { position: relative; padding: 22px 22px 20px; border-radius: 20px; background: var(--glass); border: 1px solid var(--edge); transition: transform .35s var(--ease), border-color .35s, background .35s, box-shadow .35s; }
+  .card:hover { transform: translateY(-6px); border-color: rgba(143,230,255,.5); background: rgba(255,255,255,.1); box-shadow: 0 18px 40px rgba(0,0,0,.28), 0 0 30px rgba(143,230,255,.12); }
+  .ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 14px; background: linear-gradient(135deg, rgba(255,154,213,.25), rgba(143,230,255,.25)); border: 1px solid var(--edge); }
+  .ico svg { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { margin: 0 0 6px; font-size: 19px; }
   .card p { margin: 0; color: var(--dim); font-size: 15px; }
-  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; align-items: stretch; }
-  .plan { display: flex; flex-direction: column; padding: 24px 22px; border-radius: 22px; background: var(--glass); border: 1px solid var(--edge); }
-  .plan.best { border-color: var(--b); box-shadow: 0 0 0 1px var(--b), 0 14px 40px rgba(143,230,255,.12); }
+
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; counter-reset: s; }
+  .step { position: relative; padding: 24px 22px; border-radius: 20px; background: var(--glass); border: 1px solid var(--edge); }
+  .step::before { counter-increment: s; content: counter(s); display: block; font-size: 54px; font-weight: 800; line-height: 1; margin-bottom: 8px; background: linear-gradient(135deg, var(--a), var(--b)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .step h3 { margin: 0 0 4px; font-size: 19px; } .step p { margin: 0; color: var(--dim); font-size: 15px; }
+
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; align-items: stretch; }
+  .plan { display: flex; flex-direction: column; padding: 26px 22px; border-radius: 24px; background: var(--glass); border: 1px solid var(--edge); transition: transform .35s var(--ease), box-shadow .35s; }
+  .plan:hover { transform: translateY(-6px); }
+  .plan.best { border-color: var(--b); animation: glow 3.2s ease-in-out infinite; }
   .plan .tag { font-size: 12.5px; color: var(--b); text-transform: uppercase; letter-spacing: 1px; min-height: 18px; }
   .plan h3 { margin: 4px 0 2px; font-size: 22px; }
-  .price { font-size: 42px; font-weight: 700; margin: 8px 0 2px; }
+  .price { font-size: 46px; font-weight: 700; margin: 8px 0 2px; }
   .price small { font-size: 16px; font-weight: 500; color: var(--dim); }
   .plan ul { list-style: none; padding: 0; margin: 14px 0 22px; color: var(--dim); font-size: 15px; flex: 1; }
   .plan li { padding: 4px 0 4px 24px; position: relative; }
   .plan li::before { content: "\2713"; position: absolute; left: 0; color: var(--go); }
-  .btn { display: block; text-align: center; padding: 13px 18px; border-radius: 13px; font: inherit; font-weight: 700; font-size: 16px; border: 0; width: 100%; color: #25103f; background: linear-gradient(90deg, var(--a), var(--b)); }
-  .btn[disabled] { opacity: .5; cursor: not-allowed; background: rgba(255,255,255,.18); color: var(--ink); }
-  details { border: 1px solid var(--edge); background: var(--glass); border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p { margin: 10px 0 0; color: var(--dim); font-size: 15px; }
+  .btn { display: block; text-align: center; padding: 14px 18px; border-radius: 14px; font: inherit; font-weight: 700; font-size: 16px; border: 0; width: 100%; color: #25103f; background: linear-gradient(90deg, var(--a), var(--b)); }
+  .btn[disabled] { opacity: .55; cursor: not-allowed; background: rgba(255,255,255,.18); color: var(--ink); }
+
+  details { border: 1px solid var(--edge); background: var(--glass); border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; transition: border-color .3s, background .3s; }
+  details[open] { border-color: rgba(255,154,213,.5); background: rgba(255,255,255,.09); }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--a); font-size: 22px; line-height: 1; transition: transform .3s var(--ease); }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { margin: 12px 0 0; color: var(--dim); font-size: 15px; }
   a { color: var(--b); }
-  footer { padding: 30px 0 50px; color: var(--dim); font-size: 14px; border-top: 1px solid var(--edge); margin-top: 20px; text-align: center; }
+
+  .eq { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 56px; margin: 60px 0 6px; }
+  .eq span { width: 5px; border-radius: 3px; height: 100%; background: linear-gradient(var(--a), var(--b)); transform-origin: 50% 100%; animation: eq var(--t, 1s) ease-in-out infinite alternate; opacity: .85; }
+  footer { padding: 24px 0 54px; color: var(--dim); font-size: 14px; text-align: center; }
+
+  /* scroll-in: content only starts hidden when scripting is on */
+  .js .reveal { opacity: 0; transform: translateY(34px) scale(.95); transition: opacity .85s var(--ease), transform .85s var(--ease); transition-delay: var(--d, 0s); }
+  .js .reveal.in { opacity: 1; transform: none; }
+  .js .reveal.left { transform: translateX(-40px) scale(.97); } .js .reveal.right { transform: translateX(40px) scale(.97); }
+  .js .reveal.left.in, .js .reveal.right.in { transform: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shine { to { background-position: -200% 0; } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  @keyframes ping { 70% { box-shadow: 0 0 0 9px rgba(185,255,214,0); } 100% { box-shadow: 0 0 0 0 rgba(185,255,214,0); } }
+  @keyframes sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2deg); } }
+  @keyframes vu { from { transform: scaleY(.18); } to { transform: scaleY(1); } }
+  @keyframes slide { from { transform: translateY(0); } to { transform: translateY(-34px); } }
+  @keyframes xf { from { transform: translateX(-24px); } to { transform: translateX(24px); } }
+  @keyframes marq { to { transform: translateX(-50%); } }
+  @keyframes eq { from { transform: scaleY(.12); } to { transform: scaleY(1); } }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 1px var(--b), 0 10px 40px rgba(143,230,255,.1); } 50% { box-shadow: 0 0 0 1px var(--b), 0 14px 60px rgba(143,230,255,.32); } }
+
+  @media (max-width: 560px) { .chip { display: none; } .hero { padding-top: 38px; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .js .reveal { opacity: 1; transform: none; }
+  }
 </style>
 </head>
 <body>
+<div id="bar"></div>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+
 <div class="wrap">
   <header>
-    <div class="brand">Autopilot <span>DJ</span></div>
-    <div class="soon">Desktop app coming soon</div>
+    <div class="brand">Autopilot <span class="grad">DJ</span></div>
+    <div class="soon"><i></i>Desktop app coming soon</div>
   </header>
 
   <div class="hero">
-    <h1>Your music, mixed <span>on autopilot</span></h1>
-    <p class="lead">Autopilot DJ is a desktop app for Mac and Windows. Add your own songs, press Start, and it plays them as one continuous DJ set, mixing from song to song for you.</p>
-    <div class="pills"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span></div>
+    <h1 class="reveal">Your music, mixed <span class="grad">on autopilot</span></h1>
+    <p class="lead reveal" style="--d:.1s">Autopilot DJ is a desktop app for Mac and Windows. Add your own songs, press Start, and it plays them as one continuous DJ set, mixing from song to song for you.</p>
+    <div class="pills reveal" style="--d:.2s"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span></div>
+
+    <div class="stage reveal" style="--d:.3s" aria-hidden="true">
+      <svg viewBox="0 0 760 340" role="img">
+        <defs>
+          <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ad5"/><stop offset="1" stop-color="#8fe6ff"/></linearGradient>
+          <radialGradient id="gV" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#241446"/><stop offset="1" stop-color="#0b0618"/></radialGradient>
+          <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>
+          <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+        </defs>
+        <ellipse cx="190" cy="200" rx="150" ry="110" fill="#ff9ad5" opacity=".28" filter="url(#blur)"/>
+        <ellipse cx="570" cy="200" rx="150" ry="110" fill="#8fe6ff" opacity=".26" filter="url(#blur)"/>
+        <rect x="8" y="48" width="744" height="262" rx="28" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.2)"/>
+
+        <!-- left deck -->
+        <circle cx="190" cy="180" r="112" fill="#150b2b" stroke="url(#gA)" stroke-opacity=".7" stroke-width="2"/>
+        <g class="spin">
+          <circle cx="190" cy="180" r="104" fill="url(#gV)"/>
+          <circle cx="190" cy="180" r="92" fill="none" stroke="rgba(255,255,255,.07)"/><circle cx="190" cy="180" r="80" fill="none" stroke="rgba(255,255,255,.07)"/>
+          <circle cx="190" cy="180" r="68" fill="none" stroke="rgba(255,255,255,.07)"/><circle cx="190" cy="180" r="56" fill="none" stroke="rgba(255,255,255,.07)"/>
+          <path d="M190 84 A96 96 0 0 1 286 180" fill="none" stroke="url(#gA)" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+          <path d="M190 276 A96 96 0 0 1 94 180" fill="none" stroke="url(#gA)" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+          <circle cx="190" cy="180" r="36" fill="url(#gA)"/><rect x="187.5" y="146" width="5" height="16" rx="2.5" fill="#1a1030"/><circle cx="190" cy="180" r="5" fill="#1a1030"/>
+        </g>
+        <g class="arm"><circle cx="318" cy="96" r="11" fill="#2a1a4d" stroke="rgba(255,255,255,.4)"/><path d="M318 96 L262 200" stroke="#e9e1ff" stroke-width="5" stroke-linecap="round"/><rect x="250" y="196" width="22" height="12" rx="3" transform="rotate(28 261 202)" fill="url(#gA)"/></g>
+
+        <!-- right deck -->
+        <circle cx="570" cy="180" r="112" fill="#150b2b" stroke="url(#gA)" stroke-opacity=".7" stroke-width="2"/>
+        <g class="spin rev">
+          <circle cx="570" cy="180" r="104" fill="url(#gV)"/>
+          <circle cx="570" cy="180" r="92" fill="none" stroke="rgba(255,255,255,.07)"/><circle cx="570" cy="180" r="80" fill="none" stroke="rgba(255,255,255,.07)"/>
+          <circle cx="570" cy="180" r="68" fill="none" stroke="rgba(255,255,255,.07)"/><circle cx="570" cy="180" r="56" fill="none" stroke="rgba(255,255,255,.07)"/>
+          <path d="M570 84 A96 96 0 0 1 666 180" fill="none" stroke="url(#gA)" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+          <path d="M570 276 A96 96 0 0 1 474 180" fill="none" stroke="url(#gA)" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+          <circle cx="570" cy="180" r="36" fill="url(#gA)"/><rect x="567.5" y="146" width="5" height="16" rx="2.5" fill="#1a1030"/><circle cx="570" cy="180" r="5" fill="#1a1030"/>
+        </g>
+        <g class="arm" style="animation-delay:-2.5s"><circle cx="698" cy="96" r="11" fill="#2a1a4d" stroke="rgba(255,255,255,.4)"/><path d="M698 96 L642 200" stroke="#e9e1ff" stroke-width="5" stroke-linecap="round"/><rect x="630" y="196" width="22" height="12" rx="3" transform="rotate(28 641 202)" fill="url(#gA)"/></g>
+
+        <!-- mixer -->
+        <rect x="322" y="70" width="116" height="226" rx="18" fill="#150b2b" stroke="rgba(255,255,255,.22)"/>
+        <g class="vu" fill="url(#gA)">
+          <rect x="336" y="86" width="7" height="58" rx="3"/><rect x="347" y="86" width="7" height="58" rx="3"/><rect x="358" y="86" width="7" height="58" rx="3"/><rect x="369" y="86" width="7" height="58" rx="3"/>
+          <rect x="384" y="86" width="7" height="58" rx="3"/><rect x="395" y="86" width="7" height="58" rx="3"/><rect x="406" y="86" width="7" height="58" rx="3"/><rect x="417" y="86" width="7" height="58" rx="3"/>
+        </g>
+        <rect x="353" y="162" width="4" height="74" rx="2" fill="rgba(255,255,255,.18)"/><rect x="403" y="162" width="4" height="74" rx="2" fill="rgba(255,255,255,.18)"/>
+        <rect class="fa" x="345" y="214" width="20" height="12" rx="3" fill="#e9e1ff"/><rect class="fb" x="395" y="214" width="20" height="12" rx="3" fill="#e9e1ff"/>
+        <rect x="342" y="266" width="76" height="4" rx="2" fill="rgba(255,255,255,.18)"/>
+        <rect class="xf" x="370" y="260" width="20" height="16" rx="4" fill="url(#gA)"/>
+        <circle cx="342" cy="150" r="0" fill="none"/>
+      </svg>
+      <span class="chip c1">Brake</span><span class="chip c2">Spinback</span><span class="chip c3">Filter swap</span><span class="chip c4">Riser</span>
+    </div>
   </div>
 
+  <div class="marquee reveal" aria-hidden="true"><div>
+    <span>Beatmatched</span><span>Vinyl brakes</span><span>Spinbacks</span><span>Filter swaps</span><span>Stutter cuts</span><span>Risers</span><span>Echo outs</span><span>Bass swaps</span>
+    <span>Beatmatched</span><span>Vinyl brakes</span><span>Spinbacks</span><span>Filter swaps</span><span>Stutter cuts</span><span>Risers</span><span>Echo outs</span><span>Bass swaps</span>
+  </div></div>
+
+  <section id="how">
+    <div class="eyebrow reveal">How it works</div>
+    <h2 class="reveal">Three steps, no DJ skills</h2>
+    <div class="steps">
+      <div class="step reveal"><h3>Add your songs</h3><p>Drop in music files from your computer.</p></div>
+      <div class="step reveal"><h3>Press Start</h3><p>It listens to each song and plans the order and the transitions.</p></div>
+      <div class="step reveal"><h3>It mixes for you</h3><p>One continuous set, with you free to grab the decks any time.</p></div>
+    </div>
+  </section>
+
   <section id="features">
-    <h2>What it does</h2>
+    <div class="eyebrow reveal">What it does</div>
+    <h2 class="reveal">Everything a resident DJ would do</h2>
     <div class="grid">
-      <div class="card"><h3>Mixes for you</h3><p>It listens to each song, picks the order and the transition points, and blends one into the next with crossfades, filter swaps, stutters and mashups.</p></div>
-      <div class="card"><h3>Sound effects</h3><p>Risers, sweeps and other effects are dropped in at the transitions on their own.</p></div>
-      <div class="card"><h3>Turntable decks</h3><p>Take over any time: scrub, rewind, fast-forward, brake and spin back.</p></div>
-      <div class="card"><h3>Vocal tools</h3><p>Cut the vocals out of a track, or keep only the vocals.</p></div>
-      <div class="card"><h3>Moods</h3><p>One-click vibe presets change how bold or smooth the mixing is.</p></div>
-      <div class="card"><h3>Playlists and export</h3><p>Import a Spotify or SoundCloud playlist and it matches the songs to files you own. Save the finished mix as a WAV file.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg></div><h3>Mixes for you</h3><p>It listens to each song, picks the order and the transition points, and blends one into the next with crossfades, filter swaps, stutters and mashups.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg></div><h3>Sound effects</h3><p>Risers, sweeps and other effects are dropped in at the transitions on their own.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg></div><h3>Turntable decks</h3><p>Take over any time: scrub, rewind, fast-forward, brake and spin back.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div><h3>Vocal tools</h3><p>Cut the vocals out of a track, or keep only the vocals.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></div><h3>Moods</h3><p>One-click vibe presets change how bold or smooth the mixing is.</p></div>
+      <div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg></div><h3>Playlists and export</h3><p>Import a Spotify or SoundCloud playlist and it matches the songs to files you own. Save the finished mix as a WAV file.</p></div>
     </div>
   </section>
 
   <section id="pricing">
-    <h2>Pricing</h2>
+    <div class="eyebrow reveal">Pricing</div>
+    <h2 class="reveal">Pick how you want to pay</h2>
     <div class="plans">
-      <div class="plan"><div class="tag"></div><h3>Monthly</h3><div class="price">$6.99<small> / month</small></div>
+      <div class="plan reveal"><div class="tag"></div><h3>Monthly</h3><div class="price">$6.99<small> / month</small></div>
         <ul><li>Everything in the app</li><li>Up to 2 computers</li><li>Cancel any time</li></ul>
         <button class="btn" disabled>Coming soon</button></div>
-      <div class="plan"><div class="tag"></div><h3>Yearly</h3><div class="price">$85<small> / year</small></div>
+      <div class="plan reveal"><div class="tag"></div><h3>Yearly</h3><div class="price">$85<small> / year</small></div>
         <ul><li>Everything in the app</li><li>Up to 2 computers</li><li>Cancel any time</li></ul>
         <button class="btn" disabled>Coming soon</button></div>
-      <div class="plan best"><div class="tag">Pay once</div><h3>Lifetime</h3><div class="price">$59<small> once</small></div>
+      <div class="plan best reveal"><div class="tag">Pay once</div><h3>Lifetime</h3><div class="price">$59<small> once</small></div>
         <ul><li>Everything in the app</li><li>Up to 2 computers</li><li>No subscription, ever</li></ul>
         <button class="btn" disabled>Coming soon</button></div>
     </div>
   </section>
 
   <section id="faq">
-    <h2>Questions</h2>
-    <details><summary>What do I need?</summary><p>A Mac or a Windows PC, and your own music files. No songs are included. You need an internet connection to activate your license, and the app checks it again now and then.</p></details>
-    <details><summary>Does it run on my phone or in a browser?</summary><p>No. This is a desktop app for Mac and Windows only.</p></details>
-    <details><summary>Are my songs uploaded anywhere?</summary><p>No. Everything runs on your computer and your files never leave it.</p></details>
-    <details><summary>How does the license work?</summary><p>After you buy, you get a license key by email. Paste it into the app to unlock it. One key works on up to 2 of your computers, and you can move it by deactivating one from the License menu.</p></details>
-    <details><summary>Why might my computer show a security warning?</summary><p>The app is not code-signed yet, so macOS and Windows may warn about an unknown developer the first time you open it. On a Mac, right-click the app and choose Open. On Windows, choose More info, then Run anyway.</p></details>
-    <details><summary>What if I want a refund?</summary><p>Monthly and yearly plans: email us any time before your next payment date and we will refund your current payment. Lifetime: email us within 14 days of buying and we will refund you.</p></details>
+    <div class="eyebrow reveal">FAQ</div>
+    <h2 class="reveal">Questions</h2>
+    <details class="reveal"><summary>What do I need?</summary><p>A Mac or a Windows PC, and your own music files. No songs are included. You need an internet connection to activate your license, and the app checks it again now and then.</p></details>
+    <details class="reveal"><summary>Does it run on my phone or in a browser?</summary><p>No. This is a desktop app for Mac and Windows only.</p></details>
+    <details class="reveal"><summary>Are my songs uploaded anywhere?</summary><p>No. Everything runs on your computer and your files never leave it.</p></details>
+    <details class="reveal"><summary>How does the license work?</summary><p>After you buy, you get a license key by email. Paste it into the app to unlock it. One key works on up to 2 of your computers, and you can move it by deactivating one from the License menu.</p></details>
+    <details class="reveal"><summary>Why might my computer show a security warning?</summary><p>The app is not code-signed yet, so macOS and Windows may warn about an unknown developer the first time you open it. On a Mac, right-click the app and choose Open. On Windows, choose More info, then Run anyway.</p></details>
+    <details class="reveal"><summary>What if I want a refund?</summary><p>Monthly and yearly plans: email us any time before your next payment date and we will refund your current payment. Lifetime: email us within 14 days of buying and we will refund you.</p></details>
   </section>
 
-  <footer>
+  <div class="eq" id="eq" aria-hidden="true"></div>
+  <footer class="reveal">
     Questions or support: <a href="mailto:support@autopilotdj.com">support@autopilotdj.com</a><br>
     Autopilot DJ is not affiliated with Spotify or SoundCloud.
   </footer>
 </div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  root.classList.add("js");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // equalizer strip
+  var eq = document.getElementById("eq");
+  for (var i = 0; i < 42; i++) { var s = document.createElement("span"); s.style.setProperty("--t", (0.5 + ((i * 37) % 11) / 10).toFixed(2) + "s"); s.style.animationDelay = (-((i * 53) % 17) / 10).toFixed(1) + "s"; eq.appendChild(s); }
+
+  // stagger siblings in a grid
+  document.querySelectorAll(".grid, .plans, .steps").forEach(function (g) {
+    Array.prototype.forEach.call(g.children, function (c, k) { c.style.setProperty("--d", (k * 0.09).toFixed(2) + "s"); });
+  });
+  document.querySelectorAll(".steps .step").forEach(function (c, k) { c.classList.add(k % 2 ? "right" : "left"); });
+
+  // fade and pop in as things scroll into view
+  var els = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window && !reduce) {
+    var io = new IntersectionObserver(function (list) {
+      list.forEach(function (e) { if (e.isIntersecting || e.boundingClientRect.top < 0) { e.target.classList.add("in"); io.unobserve(e.target); } });   // scrolled past fast: just show it
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    els.forEach(function (el) { io.observe(el); });
+  } else { els.forEach(function (el) { el.classList.add("in"); }); }
+
+  // progress bar and drifting glow
+  var bar = document.getElementById("bar"), o = document.querySelectorAll(".orb"), tick = false;
+  function frame() {
+    tick = false;
+    var y = window.scrollY || 0, h = Math.max(1, root.scrollHeight - window.innerHeight);
+    bar.style.transform = "scaleX(" + Math.min(1, y / h).toFixed(4) + ")";
+    if (!reduce) { o[0].style.transform = "translate3d(0," + (y * 0.12).toFixed(1) + "px,0)"; o[1].style.transform = "translate3d(0," + (y * -0.08).toFixed(1) + "px,0)"; o[2].style.transform = "translate3d(0," + (y * 0.05).toFixed(1) + "px,0)"; }
+  }
+  window.addEventListener("scroll", function () { if (!tick) { tick = true; requestAnimationFrame(frame); } }, { passive: true });
+  frame();
+})();
+</script>
 </body>
 </html>
