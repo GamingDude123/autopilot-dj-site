@@ -85,8 +85,17 @@
   .btn { display: block; text-align: center; padding: 14px 18px; border-radius: 14px; font: inherit; font-weight: 700; font-size: 16px; border: 0; width: 100%; color: #25103f; background: linear-gradient(90deg, var(--a), var(--b)); }
   .cta { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .cta small { color: var(--dim); font-size: 13.5px; }
-  a.btn { text-decoration: none; display: inline-block; width: auto; padding: 14px 28px; color: #25103f; transition: transform .3s var(--ease), box-shadow .3s; box-shadow: 0 10px 30px rgba(255,154,213,.25); }
-  a.btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 40px rgba(143,230,255,.35); }
+  .btn.go { text-decoration: none; display: inline-block; width: auto; padding: 14px 28px; color: #25103f; transition: transform .3s var(--ease), box-shadow .3s; box-shadow: 0 10px 30px rgba(255,154,213,.25); }
+  .btn.go:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 40px rgba(143,230,255,.35); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .signup { display: flex; gap: 10px; width: 100%; max-width: 520px; flex-wrap: wrap; justify-content: center; }
+  .signup input[type=email] { flex: 1 1 220px; min-width: 0; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--edge); background: rgba(255,255,255,.09); color: var(--ink); font: inherit; font-size: 16px; outline: none; transition: border-color .25s, box-shadow .25s; }
+  .signup input[type=email]::placeholder { color: #8f86b3; }
+  .signup input[type=email]:focus { border-color: var(--b); box-shadow: 0 0 0 3px rgba(143,230,255,.2); }
+  .signup .btn { flex: 0 0 auto; cursor: pointer; }
+  .notify { text-align: center; padding: 38px 24px; border-radius: 26px; border: 1px solid var(--edge); background: linear-gradient(135deg, rgba(255,154,213,.12), rgba(143,230,255,.12)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .notify h2 { margin: 0; } .notify p { margin: 0 0 6px; color: var(--dim); max-width: 520px; }
+  .notify small { color: var(--dim); font-size: 13.5px; }
   .btn[disabled] { opacity: .55; cursor: not-allowed; background: rgba(255,255,255,.18); color: var(--ink); }
 
   details { border: 1px solid var(--edge); background: var(--glass); border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; transition: border-color .3s, background .3s; }
@@ -141,7 +150,14 @@
     <h1 class="reveal">Your music, mixed <span class="grad">on autopilot</span></h1>
     <p class="lead reveal" style="--d:.1s">Autopilot DJ is a desktop app for Mac and Windows. Add your own songs, press Start, and it plays them as one continuous DJ set, mixing from song to song for you.</p>
     <div class="pills reveal" style="--d:.2s"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span><span>7-day free trial</span></div>
-    <div class="cta reveal" style="--d:.25s"><a class="btn go" href="mailto:support@autopilotdj.com?subject=Notify%20me%20when%20Autopilot%20DJ%20launches&amp;body=Please%20email%20me%20when%20Autopilot%20DJ%20is%20ready.">Notify me at launch</a><small>Free 7-day trial, no card needed</small></div>
+    <div class="cta reveal" style="--d:.25s">
+    <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.com/autopilotdj', 'popupwindow', 'scrollbars=yes,width=720,height=640')">
+      <label class="sr" for="bd-email-hero">Your email address</label>
+      <input type="email" name="email" id="bd-email-hero" placeholder="you@example.com" autocomplete="email" required>
+      <input type="hidden" value="1" name="embed">
+      <button type="submit" class="btn go">Notify me at launch</button>
+    </form>
+    <small>Launch news only, plus your free 7-day trial. Unsubscribe any time.</small></div>
 
     <div class="stage reveal" style="--d:.3s" aria-hidden="true">
       <svg viewBox="0 0 760 340" role="img">
@@ -250,6 +266,20 @@
     <details class="reveal"><summary>How does the license work?</summary><p>After you buy, you get a license key by email. Paste it into the app to unlock it. One key works on up to 2 of your computers, and you can move it by deactivating one from the License menu.</p></details>
     <details class="reveal"><summary>Why might my computer show a security warning?</summary><p>The app is not code-signed yet, so macOS and Windows may warn about an unknown developer the first time you open it. On a Mac, right-click the app and choose Open. On Windows, choose More info, then Run anyway.</p></details>
     <details class="reveal"><summary>What if I want a refund?</summary><p>Monthly and yearly plans: email us any time before your next payment date and we will refund your current payment. Lifetime: email us within 14 days of buying and we will refund you.</p></details>
+  </section>
+
+  <section id="notify">
+    <div class="notify reveal">
+      <h2>Be first to know</h2>
+      <p>The desktop app is almost ready. Leave your email and we will tell you the day it launches, with your free 7-day trial.</p>
+      <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.com/autopilotdj', 'popupwindow', 'scrollbars=yes,width=720,height=640')">
+      <label class="sr" for="bd-email-foot">Your email address</label>
+      <input type="email" name="email" id="bd-email-foot" placeholder="you@example.com" autocomplete="email" required>
+      <input type="hidden" value="1" name="embed">
+      <button type="submit" class="btn go">Notify me at launch</button>
+    </form>
+      <small>One email at launch. No spam. Unsubscribe any time.</small>
+    </div>
   </section>
 
   <div class="eq" id="eq" aria-hidden="true"></div>
