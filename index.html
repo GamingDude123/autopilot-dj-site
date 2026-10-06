@@ -96,6 +96,11 @@
   .signup input[type=email]::placeholder { color: #8f86b3; }
   .signup input[type=email]:focus { border-color: var(--b); box-shadow: 0 0 0 3px rgba(143,230,255,.2); }
   .signup .btn { flex: 0 0 auto; cursor: pointer; }
+  .signup .btn:disabled { opacity: .6; cursor: progress; }
+  .signup-msg { flex: 1 1 100%; margin: 4px 0 0; min-height: 22px; font-size: 14.5px; color: var(--dim); text-align: center; }
+  .signup-msg.ok { color: var(--go); } .signup-msg.bad { color: #ff9fb0; }
+  .signup.done input, .signup.done .btn { display: none; }
+  .signup.done .signup-msg { font-size: 16px; padding: 14px 18px; border-radius: 14px; background: rgba(185,255,214,.08); border: 1px solid rgba(185,255,214,.3); }
   .notify { text-align: center; padding: 38px 24px; border-radius: 26px; border: 1px solid var(--edge); background: linear-gradient(135deg, rgba(255,154,213,.12), rgba(143,230,255,.12)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .notify h2 { margin: 0; } .notify p { margin: 0 0 6px; color: var(--dim); max-width: 520px; }
   .notify small { color: var(--dim); font-size: 13.5px; }
@@ -119,6 +124,8 @@
   .js .reveal.in { opacity: 1; transform: none; }
   .js .reveal.left { transform: translateX(-40px) scale(.97); } .js .reveal.right { transform: translateX(40px) scale(.97); }
   .js .reveal.left.in, .js .reveal.right.in { transform: none; }
+  @media (max-width: 700px) { .js .reveal.left, .js .reveal.right { transform: translateY(34px) scale(.97); } .js .reveal.left.in, .js .reveal.right.in { transform: none; } }
+  html { overflow-x: clip; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes shine { to { background-position: -200% 0; } }
@@ -154,11 +161,12 @@
     <p class="lead reveal" style="--d:.1s">Autopilot DJ is a desktop app for Mac and Windows. Add your own songs, press Start, and it plays them as one continuous DJ set, mixing from song to song for you.</p>
     <div class="pills reveal" style="--d:.2s"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span><span>7-day free trial</span></div>
     <div class="cta reveal" style="--d:.25s">
-    <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.com/autopilotdj', 'popupwindow', 'scrollbars=yes,width=720,height=640')">
+    <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post">
       <label class="sr" for="bd-email-hero">Your email address</label>
       <input type="email" name="email" id="bd-email-hero" placeholder="you@example.com" autocomplete="email" required>
       <input type="hidden" value="1" name="embed">
       <button type="submit" class="btn go">Notify me at launch</button>
+      <p class="signup-msg" role="status" aria-live="polite"></p>
     </form>
     <small>Launch news only, plus your free 7-day trial. Unsubscribe any time.</small></div>
 
@@ -275,11 +283,12 @@
     <div class="notify reveal">
       <h2>Be first to know</h2>
       <p>The desktop app is almost ready. Leave your email and we will tell you the day it launches, with your free 7-day trial.</p>
-      <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.com/autopilotdj', 'popupwindow', 'scrollbars=yes,width=720,height=640')">
+      <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/autopilotdj" method="post">
       <label class="sr" for="bd-email-foot">Your email address</label>
       <input type="email" name="email" id="bd-email-foot" placeholder="you@example.com" autocomplete="email" required>
       <input type="hidden" value="1" name="embed">
       <button type="submit" class="btn go">Notify me at launch</button>
+      <p class="signup-msg" role="status" aria-live="polite"></p>
     </form>
       <small>One email at launch. No spam. Unsubscribe any time.</small>
     </div>
@@ -316,6 +325,25 @@
     }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
     els.forEach(function (el) { io.observe(el); });
   } else { els.forEach(function (el) { el.classList.add("in"); }); }
+
+  // launch-list signup: sent in the background, so the visitor never leaves the page
+  document.querySelectorAll("form.signup").forEach(function (form) {
+    var msg = form.querySelector(".signup-msg"), btn = form.querySelector("button"), box = form.querySelector("input[type=email]");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      var body = new URLSearchParams(); body.set("email", box.value.trim()); body.set("embed", "1");
+      btn.disabled = true; msg.className = "signup-msg"; msg.textContent = "Adding you\u2026";
+      var timeout = new Promise(function (_, no) { setTimeout(function () { no(new Error("timeout")); }, 15000); });
+      Promise.race([fetch(form.action, { method: "POST", mode: "no-cors", body: body }), timeout]).then(function () {
+        form.classList.add("done"); msg.className = "signup-msg ok";
+        msg.textContent = "You\u2019re on the list! Check your email for a confirmation message from Autopilot DJ and click the link in it. We\u2019ll email you the day it launches.";
+      }).catch(function () {
+        btn.disabled = false; msg.className = "signup-msg bad";
+        msg.innerHTML = "That didn\u2019t go through. Please try again, or email <a href=\"mailto:support@autopilotdj.com\">support@autopilotdj.com</a>.";
+      });
+    });
+  });
 
   // progress bar and drifting glow
   var bar = document.getElementById("bar"), o = document.querySelectorAll(".orb"), tick = false;
