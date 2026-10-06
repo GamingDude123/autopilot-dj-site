@@ -83,6 +83,10 @@
   .plan li { padding: 4px 0 4px 24px; position: relative; }
   .plan li::before { content: "\2713"; position: absolute; left: 0; color: var(--go); }
   .btn { display: block; text-align: center; padding: 14px 18px; border-radius: 14px; font: inherit; font-weight: 700; font-size: 16px; border: 0; width: 100%; color: #25103f; background: linear-gradient(90deg, var(--a), var(--b)); }
+  .cta { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .cta small { color: var(--dim); font-size: 13.5px; }
+  a.btn { text-decoration: none; display: inline-block; width: auto; padding: 14px 28px; color: #25103f; transition: transform .3s var(--ease), box-shadow .3s; box-shadow: 0 10px 30px rgba(255,154,213,.25); }
+  a.btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 40px rgba(143,230,255,.35); }
   .btn[disabled] { opacity: .55; cursor: not-allowed; background: rgba(255,255,255,.18); color: var(--ink); }
 
   details { border: 1px solid var(--edge); background: var(--glass); border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; transition: border-color .3s, background .3s; }
@@ -136,7 +140,8 @@
   <div class="hero">
     <h1 class="reveal">Your music, mixed <span class="grad">on autopilot</span></h1>
     <p class="lead reveal" style="--d:.1s">Autopilot DJ is a desktop app for Mac and Windows. Add your own songs, press Start, and it plays them as one continuous DJ set, mixing from song to song for you.</p>
-    <div class="pills reveal" style="--d:.2s"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span></div>
+    <div class="pills reveal" style="--d:.2s"><span>Mac</span><span>Windows</span><span>Your files stay on your computer</span><span>Works offline</span><span>7-day free trial</span></div>
+    <div class="cta reveal" style="--d:.25s"><a class="btn go" href="mailto:support@autopilotdj.com?subject=Notify%20me%20when%20Autopilot%20DJ%20launches&amp;body=Please%20email%20me%20when%20Autopilot%20DJ%20is%20ready.">Notify me at launch</a><small>Free 7-day trial, no card needed</small></div>
 
     <div class="stage reveal" style="--d:.3s" aria-hidden="true">
       <svg viewBox="0 0 760 340" role="img">
@@ -221,6 +226,7 @@
   <section id="pricing">
     <div class="eyebrow reveal">Pricing</div>
     <h2 class="reveal">Pick how you want to pay</h2>
+    <p class="reveal" style="color:var(--dim);margin:-8px 0 20px">Every plan starts with a free 7-day trial, no card needed.</p>
     <div class="plans">
       <div class="plan reveal"><div class="tag"></div><h3>Monthly</h3><div class="price">$6.99<small> / month</small></div>
         <ul><li>Everything in the app</li><li>Up to 2 computers</li><li>Cancel any time</li></ul>
@@ -237,6 +243,7 @@
   <section id="faq">
     <div class="eyebrow reveal">FAQ</div>
     <h2 class="reveal">Questions</h2>
+    <details class="reveal"><summary>Is there a free trial?</summary><p>Yes. When the app launches it will include a free 7-day trial. No card is needed, and it is one trial per computer. After that you pick a plan.</p></details>
     <details class="reveal"><summary>What do I need?</summary><p>A Mac or a Windows PC, and your own music files. No songs are included. You need an internet connection to activate your license, and the app checks it again now and then.</p></details>
     <details class="reveal"><summary>Does it run on my phone or in a browser?</summary><p>No. This is a desktop app for Mac and Windows only.</p></details>
     <details class="reveal"><summary>Are my songs uploaded anywhere?</summary><p>No. Everything runs on your computer and your files never leave it.</p></details>
