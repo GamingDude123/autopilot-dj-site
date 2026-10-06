@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1a1030">
 <title>Autopilot DJ for Mac and Windows</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="canonical" href="https://autopilotdj.com/">
 <meta name="description" content="Autopilot DJ is a desktop app for Mac and Windows that mixes your own music into a continuous DJ set for you.">
 <style>
@@ -23,7 +25,8 @@
   #bar { position: fixed; z-index: 10; left: 0; top: 0; height: 3px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--a), var(--b)); }
 
   header { padding: 22px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .brand { font-weight: 700; font-size: 20px; letter-spacing: .2px; }
+  .brand { font-weight: 700; font-size: 20px; letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+  .brand img { filter: drop-shadow(0 4px 14px rgba(255,154,213,.35)); }
   .grad { background: linear-gradient(90deg, var(--a), var(--b), var(--a)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 6s linear infinite; }
   .soon { font-size: 13px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--edge); background: var(--glass); color: var(--go); display: inline-flex; align-items: center; gap: 8px; }
   .soon i { width: 8px; height: 8px; border-radius: 50%; background: var(--go); box-shadow: 0 0 0 0 rgba(185,255,214,.6); animation: ping 1.8s infinite; }
@@ -142,7 +145,7 @@
 
 <div class="wrap">
   <header>
-    <div class="brand">Autopilot <span class="grad">DJ</span></div>
+    <div class="brand"><img src="logo.svg" alt="" width="34" height="34">Autopilot <span class="grad">DJ</span></div>
     <div class="soon"><i></i>Desktop app coming soon</div>
   </header>
 
