@@ -1,0 +1,13 @@
+{
+  "mac": {},
+  "win": {},
+  "version": "1.0.1",
+  "notes": "Live spectrum behind the decks, DJ controller support (plug in a MIDI controller and press Learn), a smoother start. The controller needs one more install of the app.",
+  "bundle": {
+    "version": "1.0.1",
+    "url": "https://autopilotdj.com/personal/bundle-1.0.1.json.gz",
+    "sha256": "961bcdeebf6e9a223961d08152bf56a9cf25d8cbd0774a6ab74b7ace57f341a4",
+    "size": 314468,
+    "shellMin": "1.0.0"
+  }
+}
