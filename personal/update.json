@@ -1,13 +1,13 @@
 {
   "mac": {},
   "win": {},
-  "version": "1.0.2",
-  "notes": "Skip now picks the song that fits best. New: Start from this song, and the DJ picks every song after it to suit the vibe.",
+  "version": "1.0.3",
+  "notes": "Smoother on phones and tablets, and a lighter page to scroll.",
   "bundle": {
-    "version": "1.0.2",
-    "url": "https://autopilotdj.com/personal/bundle-1.0.2.json.gz",
-    "sha256": "00ef573d2e43db53a1534ee02e4a216f38c3f4dc0e4eece8bc31ad26d1fb644a",
-    "size": 315402,
+    "version": "1.0.3",
+    "url": "https://autopilotdj.com/personal/bundle-1.0.3.json.gz",
+    "sha256": "374acace5498b63c94484c16f3d2b480e912d82cee04ce0545c9d50628dbbcc9",
+    "size": 316489,
     "shellMin": "1.0.0"
   }
 }
