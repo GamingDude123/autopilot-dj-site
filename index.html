@@ -149,8 +149,6 @@
   #fly .fly { position: absolute; left: 0; top: 0; will-change: transform, opacity; transform-origin: 50% 50%; }
   #fly .fly svg { width: 100%; height: 100%; display: block; overflow: visible; }
   #fly .fly::before { content: ""; position: absolute; inset: -18%; border-radius: 50%; background: radial-gradient(circle, rgba(143,230,255,.28), rgba(255,154,213,.12) 55%, transparent 70%); opacity: var(--g, 0); }
-  #fly.rest .fly:last-child svg { animation: restspin 70s linear infinite; }
-  @keyframes restspin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -372,8 +370,8 @@
 })();
 </script>
 <script>
-// the right-hand record lifts off the turntable, comes at the screen as you scroll, then settles into the page as a faint
-// spinning vinyl behind everything (reverses on the way back up)
+// the right-hand record lifts off the turntable and is thrown at the screen as you scroll, then flies off and is gone
+// (it reverses on the way back up)
 (function () {
   var fly = document.getElementById("fly"), src = document.querySelector(".stage .spin.rev"), ref = document.getElementById("rdeck");
   if (!fly || !src || !ref || matchMedia("(prefers-reduced-motion: reduce)").matches) { if (fly) fly.remove(); return; }
@@ -394,8 +392,8 @@
     var sc = lerp(peak, rest, settle) * (1 + 0.06 * ss(0, 0.06, t));
     el.style.width = el.style.height = w + "px";
     el.style.transform = "translate3d(" + (x - w / 2) + "px," + (y - w / 2) + "px,0) rotateX(" + (46 * wob) + "deg) rotateY(" + (-24 * wob) + "deg) scale(" + sc + ")";
-    var op = lerp(1, LITE ? 0 : 0.16, ss(0.42, 0.7, t));
-    el.style.opacity = ghost ? ghost * (1 - ss(0.4, 0.7, t)) * ss(0.005, 0.05, t) : op;
+    var op = 1 - ss(0.55, 0.85, t);
+    el.style.opacity = ghost ? ghost * (1 - ss(0.45, 0.7, t)) * ss(0.005, 0.05, t) : op;
     el.style.setProperty("--g", ss(0.06, 0.45, t) * (1 - ss(0.5, 0.9, t)));
   }
   function frame(now) {
@@ -408,11 +406,9 @@
       place(discs[i], ti, ax, ay, w, vw, vh, i ? alphas[i] : 0);
       spinners[i].setAttribute("transform", "translate(-466 -76) rotate(" + (ang - lags[i] * 1080) + " 570 180)");
     }
-    fly.style.zIndex = cur > 0.6 ? 0 : 4;                                                // once it has settled it sits behind the content
-    var rest = cur >= 0.999 && target >= 0.999;
-    fly.classList.toggle("rest", rest);
-    if (rest) { running = false; return; }
-    if (LITE && cur > 0.97) { fly.style.visibility = "hidden"; } else { fly.style.visibility = "visible"; }
+    var gone = cur >= 0.86;                                                               // scrolled past it: it is gone, not faded
+    fly.style.visibility = gone ? "hidden" : "visible";
+    if (gone && target >= 0.86) { running = false; return; }
     requestAnimationFrame(frame);
   }
   function kick() { if (!running) { running = true; requestAnimationFrame(frame); } }
