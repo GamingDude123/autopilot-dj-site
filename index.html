@@ -149,6 +149,8 @@
   #fly .fly { position: absolute; left: 0; top: 0; will-change: transform, opacity; transform-origin: 50% 50%; }
   #fly .fly svg { width: 100%; height: 100%; display: block; overflow: visible; }
   #fly .fly::before { content: ""; position: absolute; inset: -18%; border-radius: 50%; background: radial-gradient(circle, rgba(143,230,255,.28), rgba(255,154,213,.12) 55%, transparent 70%); opacity: var(--g, 0); }
+  #fly.rest .fly:last-child svg { animation: restspin 70s linear infinite; }
+  @keyframes restspin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -208,7 +210,7 @@
         <g class="arm"><circle cx="318" cy="96" r="11" fill="#2a1a4d" stroke="rgba(255,255,255,.4)"/><path d="M318 96 L262 200" stroke="#e9e1ff" stroke-width="5" stroke-linecap="round"/><rect x="250" y="196" width="22" height="12" rx="3" transform="rotate(28 261 202)" fill="url(#gA)"/></g>
 
         <!-- right deck -->
-        <circle cx="570" cy="180" r="112" fill="#150b2b" stroke="url(#gA)" stroke-opacity=".7" stroke-width="2"/>
+        <circle id="rdeck" cx="570" cy="180" r="112" fill="#150b2b" stroke="url(#gA)" stroke-opacity=".7" stroke-width="2"/>
         <g class="spin rev">
           <circle cx="570" cy="180" r="104" fill="url(#gV)"/>
           <circle cx="570" cy="180" r="92" fill="none" stroke="rgba(255,255,255,.07)"/><circle cx="570" cy="180" r="80" fill="none" stroke="rgba(255,255,255,.07)"/>
@@ -370,38 +372,47 @@
 })();
 </script>
 <script>
-// the right-hand record lifts off the turntable and is thrown at the screen as you scroll (reverses on the way back up)
+// the right-hand record lifts off the turntable, comes at the screen as you scroll, then settles into the page as a faint
+// spinning vinyl behind everything (reverses on the way back up)
 (function () {
-  var fly = document.getElementById("fly"), src = document.querySelector(".stage .spin.rev");
-  if (!fly || !src || matchMedia("(prefers-reduced-motion: reduce)").matches) { if (fly) fly.remove(); return; }
+  var fly = document.getElementById("fly"), src = document.querySelector(".stage .spin.rev"), ref = document.getElementById("rdeck");
+  if (!fly || !src || !ref || matchMedia("(prefers-reduced-motion: reduce)").matches) { if (fly) fly.remove(); return; }
   var LITE = matchMedia("(hover: none), (max-width: 820px)").matches;
   var base = fly.querySelector(".fly"), discs = [base], lags = [0], alphas = [1];
-  if (!LITE) [[0.035, 0.28], [0.07, 0.14]].forEach(function (g) { var c = base.cloneNode(true); fly.insertBefore(c, base); discs.push(c); lags.push(g[0]); alphas.push(g[1]); });
+  if (!LITE) [[0.04, 0.26], [0.08, 0.12]].forEach(function (g) { var c = base.cloneNode(true); fly.insertBefore(c, base); discs.push(c); lags.push(g[0]); alphas.push(g[1]); });
   var spinners = discs.map(function (d) { return d.querySelector(".fg"); });
   src.style.visibility = "hidden";
   function ss(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
-  var running = false, lastT = -1;
-  function place(el, g, t, ax, ay, w, vw, vh, ang) {
-    var lift = ss(0, 0.12, t), m = ss(0.1, 0.75, t), wob = Math.sin(Math.PI * ss(0.05, 0.95, t));
-    var x = ax + (vw * 0.5 - ax) * m, y = ay + (vh * 0.5 - ay) * m - Math.sin(Math.PI * m) * vh * 0.16;
-    var fin = Math.max(vw, vh) * 2.2 / w, sc = 1 + lift * 0.08 + (fin - 1) * Math.pow(ss(0.12, 1, t), 2.2);
+  function lerp(a, b, k) { return a + (b - a) * k; }
+  var running = false, cur = 0, resting = false;
+  function place(el, t, ax, ay, w, vw, vh, ghost) {
+    var pd = Math.min(vw * 0.92, vh * 1.0), grow = ss(0.06, 0.5, t), settle = ss(0.5, 0.96, t);
+    var m = ss(0.06, 0.5, t), wob = Math.sin(Math.PI * ss(0.04, 0.8, t));
+    var cx = lerp(ax, vw * 0.5, m), cy = lerp(ay, vh * 0.74, m) - Math.sin(Math.PI * m) * vh * 0.1;
+    var x = lerp(cx, vw * 0.8, settle), y = lerp(cy, vh * 0.74, settle);
+    var peak = 1 + (pd / w - 1) * Math.pow(grow, 1.8), rest = pd * 0.9 / w;
+    var sc = lerp(peak, rest, settle) * (1 + 0.06 * ss(0, 0.06, t));
     el.style.width = el.style.height = w + "px";
-    el.style.transform = "translate3d(" + (x - w / 2) + "px," + (y - w / 2) + "px,0) rotateX(" + (50 * wob) + "deg) rotateY(" + (-28 * wob) + "deg) scale(" + sc + ")";
-    el.style.opacity = (1 - ss(0.86, 1, t));
-    el.style.setProperty("--g", ss(0.08, 0.5, t) * (1 - ss(0.7, 1, t)));
+    el.style.transform = "translate3d(" + (x - w / 2) + "px," + (y - w / 2) + "px,0) rotateX(" + (46 * wob) + "deg) rotateY(" + (-24 * wob) + "deg) scale(" + sc + ")";
+    var op = lerp(1, LITE ? 0 : 0.16, ss(0.42, 0.7, t));
+    el.style.opacity = ghost ? ghost * (1 - ss(0.4, 0.7, t)) * ss(0.005, 0.05, t) : op;
+    el.style.setProperty("--g", ss(0.06, 0.45, t) * (1 - ss(0.5, 0.9, t)));
   }
   function frame(now) {
-    var vw = innerWidth, vh = innerHeight, t = Math.min(1, Math.max(0, scrollY / (vh * 0.9)));
-    if (t >= 1) { fly.style.visibility = "hidden"; running = false; return; }
-    fly.style.visibility = "visible";
-    var r = src.getBoundingClientRect(), w = r.width, ax = r.left + w / 2, ay = r.top + w / 2;
-    var ang = -(now / 1000) * 78 + t * 1440;            // idle turntable speed, plus the throw spin
+    var vw = innerWidth, vh = innerHeight, target = Math.min(1, Math.max(0, scrollY / (vh * 0.9)));
+    cur += (target - cur) * 0.16; if (Math.abs(target - cur) < 0.0006) cur = target;       // glide, so wheel jumps never snap
+    var r = ref.getBoundingClientRect(), w = r.width * 208 / 224, ax = r.left + r.width / 2, ay = r.top + r.height / 2;
+    var ang = -(now / 1000) * 78 + cur * 1080;                                              // idle turntable speed, plus the throw spin
     for (var i = 0; i < discs.length; i++) {
-      var ti = Math.max(0, t - lags[i]);
-      place(discs[i], lags[i], ti, ax, ay, w, vw, vh);
-      spinners[i].setAttribute("transform", "translate(-466 -76) rotate(" + (ang - lags[i] * 1440) + " 570 180)");
-      if (i > 0) discs[i].style.opacity = alphas[i] * (1 - ss(0.86, 1, ti)) * ss(0.01, 0.06, t);
+      var ti = Math.max(0, cur - lags[i]);
+      place(discs[i], ti, ax, ay, w, vw, vh, i ? alphas[i] : 0);
+      spinners[i].setAttribute("transform", "translate(-466 -76) rotate(" + (ang - lags[i] * 1080) + " 570 180)");
     }
+    fly.style.zIndex = cur > 0.6 ? 0 : 4;                                                // once it has settled it sits behind the content
+    var rest = cur >= 0.999 && target >= 0.999;
+    fly.classList.toggle("rest", rest);
+    if (rest) { running = false; return; }
+    if (LITE && cur > 0.97) { fly.style.visibility = "hidden"; } else { fly.style.visibility = "visible"; }
     requestAnimationFrame(frame);
   }
   function kick() { if (!running) { running = true; requestAnimationFrame(frame); } }
